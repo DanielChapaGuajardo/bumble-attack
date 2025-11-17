@@ -1,0 +1,624 @@
+@keyframes jumpAndCenterAnimation {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.12);
+  }
+}
+
+@keyframes jumpOnlyAnimation {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+body {
+  margin: 0;
+  font-family: "Fredoka One", cursive;
+  background-image: url("models/Fondo.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #333;
+  overflow: hidden;
+}
+
+.pantalla {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* --- ESTILOS DEL MENÚ PRINCIPAL --- */
+
+#menu-principal {
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 5vh 5vw;
+  box-sizing: border-box;
+}
+
+.panel-lateral {
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 20px 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  border: 5px solid #3498db;
+  width: 320px;
+  box-sizing: border-box;
+}
+
+.panel-lateral h2 {
+  text-align: center;
+  margin-top: 0;
+  color: #3498db;
+  font-size: 2rem;
+}
+
+#titulo-principal {
+  width: 550px;
+  height: auto;
+  position: absolute;
+  top: 5vh;
+  left: 50%;
+  animation: jumpAndCenterAnimation 1s ease-in-out infinite;
+}
+
+#jugar-container {
+  position: absolute;
+  bottom: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#jugar-container #btn-jugar {
+  font-size: 2.5rem;
+  padding: 20px 80px;
+  border-radius: 15px;
+}
+
+#jugar-container #btn-jugar:hover {
+  animation: jumpOnlyAnimation 0.8s ease-in-out infinite;
+}
+
+button {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 15px;
+  font-family: "Fredoka One", cursive;
+  font-size: 1.5rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background-color: #3498db;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #5dade2;
+  animation: jumpOnlyAnimation 0.8s ease-in-out infinite;
+}
+
+button:last-child {
+  margin-bottom: 0;
+}
+
+#puntuaciones-menu ol {
+  list-style: none;
+  padding: 0;
+  font-size: 1.3rem;
+}
+
+#puntuaciones-menu li {
+  background-color: rgba(240, 240, 240, 0.8);
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 5px;
+}
+
+/* --- ESTILOS DE OTRAS PANTALLAS --- */
+
+#pantalla-juego {
+  background-color: transparent;
+}
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+#hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 2rem;
+  color: white;
+  text-shadow: 2px 2px 4px #000;
+  flex-wrap: wrap; /* Para que quepan los items del HUD */
+  gap: 10px;
+}
+.hud-item {
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+#menu-pausa {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.menu-container {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 30px 50px;
+  border-radius: 20px;
+  text-align: center;
+  border: 5px solid #3498db;
+}
+
+/* --- ESTILOS PARA OVERLAYS Y CONTROLES --- */
+
+#settings-overlay,
+#register-overlay,
+#login-overlay,
+#profile-overlay,
+#game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+#difficulty-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 15, 15, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  color: white;
+}
+
+#sound-button,
+#settings-button {
+  position: fixed;
+  bottom: 25px;
+  width: 60px;
+  height: 60px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 1000;
+  border: 3px solid white;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+#sound-button {
+  right: 25px;
+}
+#settings-button {
+  right: 95px;
+}
+
+#sound-button:hover,
+#settings-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* --- ESTILOS PARA MENÚ DE DIFICULTAD --- */
+
+.difficulty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* Reducido el gap */
+}
+.difficulty-previews {
+  display: flex;
+  gap: 50px;
+}
+.difficulty-option {
+  text-align: center;
+}
+.difficulty-option img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  border: 4px solid #555;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: #1a1a1a;
+}
+.difficulty-option:hover img {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(255, 223, 77, 0.7);
+}
+.difficulty-option h3 {
+  margin-top: 15px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.difficulty-selector {
+  background-color: #333;
+  border-radius: 25px;
+  padding: 5px;
+  display: inline-flex;
+  border: 2px solid #555;
+}
+.difficulty-selector button {
+  background-color: transparent;
+  border: none;
+  color: #aaa;
+  font-family: "Fredoka One", cursive;
+  font-size: 1.2rem;
+  padding: 10px 30px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  margin: 0;
+  animation: none;
+}
+.difficulty-selector button:hover {
+  background-color: #444;
+  animation: none;
+}
+.difficulty-selector button.active {
+  background-color: #ff4d4d;
+  color: white;
+}
+.action-buttons {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px; /* Añadido margen */
+}
+.action-buttons button {
+  background-color: #ff4d4d;
+  font-size: 1.5rem;
+  padding: 15px 40px;
+  border-radius: 10px;
+}
+.action-buttons button:hover {
+  background-color: #ff6666;
+  animation: jumpOnlyAnimation 0.8s ease-in-out infinite;
+}
+
+/* --- ESTILOS PARA FORMULARIOS --- */
+
+.form-item {
+  margin-bottom: 20px;
+  text-align: left;
+}
+.form-item label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-size: 1.2rem;
+}
+.form-item input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  font-size: 1.1rem;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+.form-item input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+.btn-primary {
+  background-color: #28a745;
+  width: 100%;
+}
+.btn-primary:hover {
+  background-color: #218838;
+}
+.btn-secondary {
+  background-color: #6c757d;
+  width: 100%;
+}
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* --- ESTILOS PARA VENTANA DE PERFIL --- */
+
+.profile-container {
+  background: linear-gradient(145deg, #2c3e50, #34495e);
+  color: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 3px solid #7f8c8d;
+  text-align: center;
+}
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #ecf0f1;
+  margin-bottom: 15px;
+  background-image: url("models/Perfil.png");
+  background-size: cover;
+  background-position: center;
+}
+#profile-username {
+  margin: 0;
+  font-size: 2.2rem;
+  color: #ecf0f1;
+}
+.profile-stats h3 {
+  font-size: 1.5rem;
+  color: #3498db;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  padding: 10px 5px;
+  border-bottom: 1px solid #7f8c8d;
+}
+.stat-item:last-child {
+  border-bottom: none;
+}
+.stat-value {
+  font-weight: bold;
+  color: #ecf0f1;
+}
+#close-profile-button {
+  margin-top: 30px;
+  width: 100%;
+}
+
+/* --- ESTILOS PARA MENSAJE DE BIENVENIDA (FUTURO) --- */
+
+#welcome-message {
+  color: white;
+  font-size: 1.5rem;
+  text-align: center;
+  padding: 20px;
+}
+#welcome-message h2 {
+  margin: 0;
+  line-height: 1.2;
+  text-shadow: 2px 2px 4px #000;
+}
+
+/* --- ESTILOS PARA PANTALLA DE FIN DE JUEGO --- */
+
+.btn-ingame {
+  padding: 10px 20px !important;
+  font-size: 1rem !important;
+  width: auto !important;
+  margin: 0 !important;
+  animation: none !important;
+  background-color: #dc3545;
+}
+.btn-ingame:hover {
+  background-color: #c82333;
+  animation: none !important;
+}
+.score-text {
+  font-size: 1.5rem;
+  color: #555;
+  margin-top: 0;
+}
+.score-value {
+  font-size: 4rem;
+  color: #3498db;
+  font-weight: bold;
+  margin: 10px 0 30px 0;
+}
+/* NUEVO: Estilo para el mensaje de ganador */
+#winner-message {
+  font-size: 2.5rem;
+  color: #28a745;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+/* --- ESTILOS HUD --- */
+
+#stamina-container {
+  position: fixed;
+  bottom: 80px; /* Subido para dar espacio a la vida */
+  left: 30px;
+  width: 200px;
+  height: 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 2px solid white;
+  border-radius: 10px;
+  padding: 2px;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+#stamina-bar {
+  width: 100%;
+  height: 100%;
+  background-color: #3498db;
+  border-radius: 6px;
+  transition: width 0.1s linear;
+}
+
+#tracker-arrow {
+  position: fixed;
+  top: 75%;
+  left: 50%;
+  font-size: 50px;
+  color: red;
+  z-index: 100;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%);
+}
+
+#flower-tracker-arrow {
+  position: fixed;
+  top: 75%;
+  left: 50%;
+  font-size: 40px;
+  color: #ffd700;
+  z-index: 100;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%);
+}
+
+/* --- ESTILOS SELECTOR DE ESCENARIO --- */
+
+.selector-title {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  margin-top: 20px; /* Reducido */
+  color: #ddd;
+}
+
+.scenario-selector,
+.game-mode-selector {
+  /* APLICADO A AMBOS */
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.scenario-selector button,
+.game-mode-selector button {
+  /* APLICADO A AMBOS */
+  background-color: #444;
+  color: #aaa;
+  font-size: 1.2rem;
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 2px solid #555;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  width: auto;
+  animation: none;
+}
+
+.scenario-selector button:hover,
+.game-mode-selector button:hover {
+  /* APLICADO A AMBOS */
+  background-color: #555;
+  color: #fff;
+  animation: none;
+}
+
+.scenario-selector button.active,
+.game-mode-selector button.active {
+  /* APLICADO A AMBOS */
+  background-color: #3498db;
+  color: white;
+  border-color: #fff;
+}
+
+.scenario-selector button span,
+.game-mode-selector button span {
+  /* APLICADO A AMBOS */
+  font-size: 1.5rem;
+}
+
+/* --- NUEVO: ESTILOS PARA BARRAS DE SALUD --- */
+
+#health-hud {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 100;
+  color: white;
+  font-size: 1rem;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.health-bar-container {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+  width: 250px;
+}
+
+.health-bar-container span {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.health-bar-outer {
+  width: 100%;
+  height: 20px;
+  background-color: #555;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.health-bar-inner {
+  width: 100%;
+  height: 100%;
+  background-color: #28a745; /* Verde */
+  transition: width 0.3s ease;
+}
+
+/* Ocultar salud del enemigo al inicio */
+#enemy-health-container {
+  display: none;
+}

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bumble Attack</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
+      rel="stylesheet"
+    />
+
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+    ></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@v0.155.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@v0.155.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="menu-principal" class="pantalla">
+      <div class="panel-lateral" id="puntuaciones-menu">
+        <h2>Mejores Puntajes</h2>
+        <ol>
+          <li>🥇 BuckyBoy - 25,400 pts</li>
+          <li>🥈 DeerDoe - 23,100 pts</li>
+          <li>🥉 ForestRun - 21,950 pts</li>
+          <li>4. Antlers - 19,800 pts</li>
+          <li>5. TheStag - 18,500 pts</li>
+        </ol>
+      </div>
+      <img
+        src="models/Logo.png"
+        alt="Logo de Buck Attack"
+        id="titulo-principal"
+      />
+      <div class="panel-lateral" id="user-panel">
+        <div id="opciones-usuario">
+          <button id="btn-registrarse">Registrarse</button>
+          <button id="btn-iniciar-sesion">Iniciar Sesión</button>
+          <button id="btn-mi-perfil">Mi Perfil</button>
+        </div>
+        <div id="welcome-message" style="display: none"></div>
+      </div>
+      <div id="jugar-container">
+        <button id="btn-jugar">JUGAR</button>
+      </div>
+    </div>
+
+    <div id="pantalla-juego" class="pantalla" style="display: none">
+      <div id="canvas-container"></div>
+      <div id="hud">
+        <div class="hud-item" id="tiempo">Tiempo: 2:00</div>
+        <div class="hud-item" id="difficulty-display">Dificultad: -</div>
+        <div class="hud-item" id="score-board">
+          Matamoscas: 0<br />
+          Abeja: 0
+        </div>
+        <div class="hud-item" id="miel-recolectada">Miel: 0/10</div>
+        <button id="end-game-button" class="btn-ingame">Terminar Juego</button>
+      </div>
+      <div id="stamina-container" style="display: none">
+        <div id="stamina-bar"></div>
+      </div>
+      <div id="tracker-arrow" style="display: none">➤</div>
+      <div id="flower-tracker-arrow" style="display: none">🌷</div>
+
+      <div id="health-hud" style="display: none">
+        <div class="health-bar-container" id="my-health-container">
+          <span>MI SALUD</span>
+          <div class="health-bar-outer">
+            <div id="my-health-bar" class="health-bar-inner"></div>
+          </div>
+        </div>
+        <div class="health-bar-container" id="enemy-health-container">
+          <span>ENEMIGO</span>
+          <div class="health-bar-outer">
+            <div id="enemy-health-bar" class="health-bar-inner"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="menu-pausa" style="display: none">
+        <div class="menu-container">
+          <h2>Pausa</h2>
+          <button id="btn-reanudar">Reanudar</button>
+          <button id="btn-salir-menu">Salir al Menú</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settings-overlay" style="display: none">
+      <div class="menu-container">
+        <h2>Configuración</h2>
+        <div class="setting-item">
+          <label for="volume-slider">Volumen de Música</label>
+          <input
+            type="range"
+            id="volume-slider"
+            min="0"
+            max="1"
+            step="0.05"
+            value="1"
+          />
+        </div>
+        <button id="close-settings-button">Cerrar</button>
+      </div>
+    </div>
+
+    <div id="difficulty-overlay" style="display: none">
+      <div class="difficulty-container">
+        <div class="difficulty-previews">
+          <div class="difficulty-option">
+            <img src="models/feliz.png" alt="Dificultad Fácil" />
+            <h3>Dificultad fácil</h3>
+          </div>
+          <div class="difficulty-option">
+            <img src="models/serio.png" alt="Dificultad Media" />
+            <h3>Dificultad Media</h3>
+          </div>
+          <div class="difficulty-option">
+            <img src="models/enojado.png" alt="Dificultad Difícil" />
+            <h3>Dificultad Difícil</h3>
+          </div>
+        </div>
+        <div class="difficulty-selector">
+          <button data-difficulty="facil" class="active">Fácil</button>
+          <button data-difficulty="medio">Medio</button>
+          <button data-difficulty="dificil">Difícil</button>
+        </div>
+
+        <h3 class="selector-title">Elige un Escenario</h3>
+        <div class="scenario-selector">
+          <button data-scenario="granja" class="active">
+            <span>☀️</span>
+            Granja
+          </button>
+          <button data-scenario="desierto">
+            <span>🌵</span>
+            Desierto
+          </button>
+          <button data-scenario="parque">
+            <span>🏞️</span>
+            Parque
+          </button>
+        </div>
+
+        <h3 class="selector-title">Elige un Modo de Juego</h3>
+        <div class="game-mode-selector">
+          <button data-mode="collector" class="active">
+            <span>🐝</span>
+            Recolector
+          </button>
+          <button data-mode="shooter">
+            <span>💥</span>
+            Shooter
+          </button>
+        </div>
+
+        <div class="action-buttons">
+          <button id="btn-comenzar">Comenzar</button>
+          <button id="btn-multiplayer">Multi-Jugador</button>
+          <button id="btn-volver-dificultad">Volver</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="register-overlay" style="display: none">
+      <div class="menu-container">
+        <h2>Crear Cuenta</h2>
+        <form id="register-form">
+          <div class="form-item">
+            <label for="username">Nombre de Usuario</label>
+            <input
+              type="text"
+              id="username"
+              placeholder="Elige un apodo"
+              required
+            />
+          </div>
+          <div class="form-item">
+            <label for="email">Correo Electrónico</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="tu@correo.com"
+              required
+            />
+          </div>
+          <div class="form-item">
+            <label for="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Mínimo 8 caracteres"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-primary">Registrarse</button>
+          <button
+            type="button"
+            id="close-register-button"
+            class="btn-secondary"
+          >
+            Volver
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="login-overlay" style="display: none">
+      <div class="menu-container">
+        <h2>Iniciar Sesión</h2>
+        <form id="login-form">
+          <div class="form-item">
+            <label for="login-user">Usuario o Correo</label>
+            <input
+              type="text"
+              id="login-user"
+              placeholder="Tu usuario o correo"
+              required
+            />
+          </div>
+          <div class="form-item">
+            <label for="login-password">Contraseña</label>
+            <input
+              type="password"
+              id="login-password"
+              placeholder="Tu contraseña"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-primary">Entrar</button>
+          <button type="button" id="close-login-button" class="btn-secondary">
+            Volver
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="profile-overlay" style="display: none">
+      <div class="profile-container">
+        <div class="profile-header">
+          <div class="profile-avatar"></div>
+          <h2 id="profile-username">BuckyBoy</h2>
+        </div>
+        <div class="profile-stats">
+          <h3>Estadísticas</h3>
+          <div class="stat-item">
+            <span>Puntaje Máximo</span>
+            <span class="stat-value">25,400</span>
+          </div>
+          <div class="stat-item">
+            <span>Partidas Jugadas</span>
+            <span class="stat-value">128</span>
+          </div>
+          <div class="stat-item">
+            <span>Victorias</span>
+            <span class="stat-value">73</span>
+          </div>
+        </div>
+        <button id="close-profile-button" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+
+    <div id="game-over-overlay" style="display: none">
+      <div class="menu-container">
+        <h2>¡Juego Terminado!</h2>
+        <h3 id="winner-message"></h3>
+        <p class="score-text">Puntuación Final:</p>
+        <p id="final-score" class="score-value">0</p>
+        <button id="return-to-menu-button">Volver al Menú</button>
+      </div>
+    </div>
+    <audio id="background-music" src="models/Musica.mp3" loop muted></audio>
+    <audio id="game-music" src="models/Shock Strike.mp3" loop muted></audio>
+    <audio id="sound-comer" src="models/comer.mp3"></audio>
+    <audio id="sound-aplastar" src="models/aplastar.mp3"></audio>
+    <audio id="sound-raquetazo" src="models/raquetazo.mp3"></audio>
+    <audio id="sound-laser" src="models/laser.mp3"></audio>
+    <audio id="sound-hit" src="models/hit.mp3"></audio>
+
+    <div id="settings-button">⚙️</div>
+    <div id="sound-button">🔇</div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
