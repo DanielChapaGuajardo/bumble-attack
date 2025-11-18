@@ -29,12 +29,8 @@
     <div id="menu-principal" class="pantalla">
       <div class="panel-lateral" id="puntuaciones-menu">
         <h2>Mejores Puntajes</h2>
-        <ol>
-          <li>🥇 BuckyBoy - 25,400 pts</li>
-          <li>🥈 DeerDoe - 23,100 pts</li>
-          <li>🥉 ForestRun - 21,950 pts</li>
-          <li>4. Antlers - 19,800 pts</li>
-          <li>5. TheStag - 18,500 pts</li>
+        <ol id="lista-puntuaciones">
+          <li>Cargando puntajes...</li>
         </ol>
       </div>
       <img
@@ -44,11 +40,23 @@
       />
       <div class="panel-lateral" id="user-panel">
         <div id="opciones-usuario">
-          <button id="btn-registrarse">Registrarse</button>
-          <button id="btn-iniciar-sesion">Iniciar Sesión</button>
-          <button id="btn-mi-perfil">Mi Perfil</button>
+          <button id="btn-login-google">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+              alt="Google"
+              style="width: 20px; height: 20px; vertical-align: middle"
+            />
+            Iniciar Sesión con Google
+          </button>
         </div>
-        <div id="welcome-message" style="display: none"></div>
+
+        <div id="welcome-message" style="display: none">
+          <h2 id="welcome-username"></h2>
+          <button id="btn-mi-perfil">Mi Perfil</button>
+          <button id="btn-logout" style="background-color: #dc3545">
+            Cerrar Sesión
+          </button>
+        </div>
       </div>
       <div id="jugar-container">
         <button id="btn-jugar">JUGAR</button>

@@ -1,19 +1,174 @@
+// --- DEPENDENCIAS ---
 const express = require("express");
 const { createServer } = require("node:http");
 const { join } = require("node:path");
 const { Server } = require("socket.io");
+const mongoose = require("mongoose");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 
+// --- CONFIGURACIÓN DE APP ---
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+// Lee el puerto de las variables de entorno de Render
+const PORT = process.env.PORT || 3000;
+
+// --- BASE DE DATOS (NUEVO) ---
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Conectado a MongoDB Atlas"))
+  .catch((err) => console.error("Error al conectar a MongoDB:", err));
+
+// Esquema de Usuario
+const userSchema = new mongoose.Schema({
+  googleId: { type: String, required: true },
+  displayName: { type: String },
+  // (Puedes añadir más campos como avatar, etc.)
+});
+const User = mongoose.model("User", userSchema);
+
+// Esquema de Puntaje
+const scoreSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  displayName: { type: String },
+  role: { type: String },
+  score: { type: Number },
+  date: { type: Date, default: Date.now },
+});
+const Score = mongoose.model("Score", scoreSchema);
+
+// --- AUTENTICACIÓN (NUEVO) ---
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET, // Se lee desde Render
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI, // Se lee desde Render
+  }),
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
+  },
+});
+
+app.use(sessionMiddleware);
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID, // Se lee desde Render
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Se lee desde Render
+      callbackURL: "/auth/google/callback", // Debe coincidir con tu config de Google
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      // Buscar o crear usuario
+      try {
+        let user = await User.findOne({ googleId: profile.id });
+        if (user) {
+          done(null, user);
+        } else {
+          user = await User.create({
+            googleId: profile.id,
+            displayName: profile.displayName,
+          });
+          done(null, user);
+        }
+      } catch (err) {
+        done(err, null);
+      }
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
+// Rutas de Autenticación
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/" }),
+  (req, res) => {
+    // Redirección exitosa a la página principal
+    res.redirect("/");
+  }
+);
+
+app.get("/auth/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/");
+  });
+});
+
+// API para saber quién soy (para el frontend)
+app.get("/api/me", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({
+      loggedIn: true,
+      user: {
+        username: req.user.displayName,
+      },
+    });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
+
+// API para obtener puntajes (para el frontend)
+app.get("/api/scores", async (req, res) => {
+  try {
+    const topScores = await Score.find().sort({ score: -1 }).limit(10).exec();
+    res.json(topScores);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener puntajes" });
+  }
+});
+
+// --- SERVIR EL JUEGO (Tu código) ---
 app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "index.html"));
 });
 
-// --- LÓGICA MULTIJUGADOR ---
+// --- LÓGICA MULTIJUGADOR (Tu código, con modificaciones) ---
+
+// Compartir la sesión de Express con Socket.io (¡IMPORTANTE!)
+io.engine.use(sessionMiddleware);
+io.use((socket, next) => {
+  passport.deserializeUser(
+    socket.request.session.passport?.user,
+    (err, user) => {
+      if (err) return next(err);
+      if (user) {
+        socket.request.user = user;
+      }
+      next();
+    }
+  );
+});
 
 const players = {};
 const flowers = {}; // Objeto para guardar las flores
@@ -106,7 +261,6 @@ for (let i = 0; i < MAX_FLOWERS; i++) {
 }
 
 // --- Bucle de Items ---
-// CORREGIDO: Este bucle debe correr solo una vez, no por cada conexión
 setInterval(() => {
   if (!gameInProgress) return;
 
@@ -131,6 +285,33 @@ setInterval(() => {
   }
 }, 1000);
 
+// --- MODIFICADO: Guardar puntajes al terminar el juego ---
+async function handleGameOver(winnerRole) {
+  io.emit("gameOver", { winnerRole });
+  gameInProgress = false;
+
+  // Guardar puntajes en la BD
+  for (const id in players) {
+    const player = players[id];
+    const user = player.user; // El usuario de la sesión
+
+    if (user && player.score > 0) {
+      try {
+        await Score.create({
+          userId: user._id,
+          displayName: user.displayName,
+          role: player.role,
+          score: player.score,
+        });
+        console.log(`Puntaje de ${user.displayName} guardado.`);
+      } catch (err) {
+        console.error("Error al guardar puntaje:", err);
+      }
+    }
+  }
+  // Fin de la lógica de guardado
+}
+
 // --- Conexión de Socket ---
 io.on("connection", (socket) => {
   console.log("Un jugador se conectó:", socket.id);
@@ -141,7 +322,7 @@ io.on("connection", (socket) => {
     role = "bee";
     roomDifficulty = "facil";
     roomMode = "collector";
-    resetGame(); // CORREGIDO: Resetear el juego cuando el primer jugador entra
+    resetGame();
   } else if (numPlayers === 1) {
     role = "swatter";
   } else {
@@ -150,6 +331,7 @@ io.on("connection", (socket) => {
 
   players[socket.id] = {
     id: socket.id,
+    user: socket.request.user, // AÑADIDO: Guardamos el usuario de la sesión
     role: role,
     position: { x: role === "bee" ? 0 : 5, y: role === "bee" ? 2 : 1, z: 0 },
     quaternion: { x: 0, y: 0, z: 0, w: 1 },
@@ -226,8 +408,7 @@ io.on("connection", (socket) => {
       io.emit("updateScore", { id: hitter.id, score: hitter.score });
 
       if (hitter.score >= 3) {
-        io.emit("gameOver", { winnerRole: "swatter" });
-        gameInProgress = false;
+        handleGameOver("swatter"); // MODIFICADO
       } else {
         const newX = Math.random() * MAP_SIZE_X - MAP_SIZE_X / 2;
         const newZ = Math.random() * MAP_SIZE_Z - MAP_SIZE_Z / 2;
@@ -258,8 +439,7 @@ io.on("connection", (socket) => {
         shooter.score += 1;
         io.emit("updateScore", { id: shooter.id, score: shooter.score });
 
-        io.emit("gameOver", { winnerRole: shooter.role });
-        gameInProgress = false;
+        handleGameOver(shooter.role); // MODIFICADO
 
         target.hp = 100;
         const newX = Math.random() * MAP_SIZE_X - MAP_SIZE_X / 2;
@@ -289,8 +469,7 @@ io.on("connection", (socket) => {
       io.emit("updateScore", { id: bee.id, score: bee.score });
 
       if (bee.score >= 10) {
-        io.emit("gameOver", { winnerRole: "bee" });
-        gameInProgress = false;
+        handleGameOver("bee"); // MODIFICADO
       }
     }
   });
@@ -341,6 +520,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log("Servidor de juego corriendo en http://localhost:3000");
+server.listen(PORT, () => {
+  console.log(`Servidor de juego corriendo en http://localhost:${PORT}`);
 });

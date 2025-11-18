@@ -1,5 +1,56 @@
 import { initGame } from "./game.js";
 
+// --- NUEVO: FUNCIONES DE AUTH Y SCORES ---
+async function checkLoginStatus() {
+  try {
+    const response = await fetch("/api/me");
+    const data = await response.json();
+
+    if (data.loggedIn) {
+      // Logueado
+      opcionesUsuario.style.display = "none";
+      welcomeMessage.style.display = "block";
+      welcomeUsername.innerHTML = `Bienvenido<br>${data.user.username}`;
+    } else {
+      // No logueado
+      opcionesUsuario.style.display = "block";
+      welcomeMessage.style.display = "none";
+    }
+  } catch (err) {
+    console.error("Error al checar status:", err);
+    opcionesUsuario.style.display = "block";
+    welcomeMessage.style.display = "none";
+  }
+}
+
+async function loadHighScores() {
+  try {
+    const response = await fetch("/api/scores");
+    const scores = await response.json();
+
+    listaPuntuaciones.innerHTML = ""; // Limpiar "Cargando..."
+
+    if (scores.length === 0) {
+      listaPuntuaciones.innerHTML = "<li>No hay puntajes todavía.</li>";
+      return;
+    }
+
+    const icons = ["🥇", "🥈", "🥉"];
+    scores.forEach((score, index) => {
+      const li = document.createElement("li");
+      const icon = icons[index] || `<span>${index + 1}.</span>`;
+      li.innerHTML = `${icon} ${
+        score.displayName
+      } - ${score.score.toLocaleString()} pts`;
+      listaPuntuaciones.appendChild(li);
+    });
+  } catch (err) {
+    console.error("Error al cargar puntajes:", err);
+    listaPuntuaciones.innerHTML = "<li>Error al cargar puntajes.</li>";
+  }
+}
+// --- FIN DE FUNCIONES NUEVAS ---
+
 let isGameInitialized = false;
 
 // --- REFERENCIAS A ELEMENTOS DEL DOM ---
@@ -35,6 +86,14 @@ const endGameButton = document.getElementById("end-game-button");
 const gameOverOverlay = document.getElementById("game-over-overlay");
 const finalScoreSpan = document.getElementById("final-score");
 const returnToMenuButton = document.getElementById("return-to-menu-button");
+
+// --- NUEVAS REFERENCIAS DOM ---
+const btnLoginGoogle = document.getElementById("btn-login-google");
+const btnLogout = document.getElementById("btn-logout");
+const welcomeUsername = document.getElementById("welcome-username");
+const listaPuntuaciones = document.getElementById("lista-puntuaciones");
+const opcionesUsuario = document.getElementById("opciones-usuario");
+const welcomeMessage = document.getElementById("welcome-message");
 
 const pantallas = {
   menuPrincipal: document.getElementById("menu-principal"),
@@ -161,23 +220,20 @@ btnVolverDificultad.addEventListener("click", () => {
   difficultyOverlay.style.display = "none";
 });
 
-// --- LÓGICA PARA VENTANAS DE USUARIO ---
+// --- LÓGICA PARA VENTANAS DE USUARIO (MODIFICADA) ---
+// Escondemos los botones viejos de registro y login
 if (btnRegistrarse) {
-  btnRegistrarse.addEventListener(
-    "click",
-    () => (registerOverlay.style.display = "flex")
-  );
+  btnRegistrarse.style.display = "none";
 }
+if (btnIniciarSesion) {
+  btnIniciarSesion.style.display = "none";
+}
+
+// Mantenemos la lógica de los modales por si los usas (ej. Mi Perfil)
 if (closeRegisterButton) {
   closeRegisterButton.addEventListener(
     "click",
     () => (registerOverlay.style.display = "none")
-  );
-}
-if (btnIniciarSesion) {
-  btnIniciarSesion.addEventListener(
-    "click",
-    () => (loginOverlay.style.display = "flex")
   );
 }
 if (closeLoginButton) {
@@ -247,22 +303,21 @@ document.getElementById("btn-salir-menu").addEventListener("click", () => {
   window.location.reload();
 });
 
-// --- SIMULACIÓN DE SESIÓN DE USUARIO ---
-const opcionesUsuario = document.getElementById("opciones-usuario");
-const welcomeMessage = document.getElementById("welcome-message");
-let isLoggedIn = false;
-let username = "Bucky";
-function checkUserStatus() {
-  if (isLoggedIn) {
-    opcionesUsuario.style.display = "none";
-    welcomeMessage.style.display = "block";
-    welcomeMessage.innerHTML = `<h2>Bienvenido<br>abeja ${username}</h2>`;
-  } else {
-    opcionesUsuario.style.display = "block";
-    welcomeMessage.style.display = "none";
-  }
+// --- NUEVOS LISTENERS DE AUTH ---
+if (btnLoginGoogle) {
+  btnLoginGoogle.addEventListener("click", () => {
+    window.location.href = "/auth/google"; // Redirige al login
+  });
 }
 
-// --- INICIO ---
-checkUserStatus();
+if (btnLogout) {
+  btnLogout.addEventListener("click", () => {
+    window.location.href = "/auth/logout"; // Redirige al logout
+  });
+}
+
+// --- INICIO (MODIFICADO) ---
+// La vieja simulación de "checkUserStatus()" se elimina
+checkLoginStatus(); // Revisa si ya estamos logueados
+loadHighScores(); // Carga los puntajes de la BD
 mostrarPantalla("menuPrincipal");
