@@ -11,6 +11,7 @@ const MongoStore = require("connect-mongo");
 
 // --- CONFIGURACIÓN DE APP ---
 const app = express();
+app.set("trust proxy", 1); // <-- CAMBIO 1: Confiar en el proxy de Render
 const server = createServer(app);
 const io = new Server(server);
 
@@ -63,7 +64,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID, // Se lee desde Render
       clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Se lee desde Render
-      callbackURL: "/auth/google/callback", // Debe coincidir con tu config de Google
+      // <-- CAMBIO 2: URL absoluta para el callback
+      callbackURL: "https://bumble-attack.onrender.com/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       // Buscar o crear usuario
